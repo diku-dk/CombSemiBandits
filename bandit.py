@@ -5,6 +5,9 @@ EPS = 10E-12
 
 
 class Bandit:
+    """
+    Interface for semi-bandit algorithms.
+    """
 
     def __init__(self, action_set, d, m):
         self.d = d
@@ -19,7 +22,7 @@ class Bandit:
     def next(self):
         raise NotImplementedError
 
-    def reset(self):
+    def reset(self) -> object:
         raise NotImplementedError
 
     def update(self, action, feedback):
@@ -34,7 +37,7 @@ class Bandit:
             included = np.copy(x[order])
             remaining = 1.0 - included
             outer_samples = [w for w in self.split_sample(included, remaining)]
-            weights = list(map(lambda x: x[0], outer_samples))
+            weights = list(map(lambda z: z[0], outer_samples))
             _, left, right = outer_samples[np.random.choice(len(outer_samples), p=weights)]
             if left == right - 1:
                 sample = range(self.m)
@@ -71,7 +74,12 @@ class Bandit:
             yield (prop, self.m, self.m + 1)
 
 
-class ThompsonSampling(Bandit):  # based on the paper "Thompson Sampling for Combinatorial Semi-bandits"
+class ThompsonSampling(Bandit):
+    """
+    Implementation of Thompson Sampling for Combinatorial Semi-bandits as a baseline algorithm.
+    https://arxiv.org/pdf/1803.04623.pdf
+    """
+
     def __init__(self, d, action_set, m):
         super().__init__(action_set, d, m)
         self.a = np.ones(self.d)
@@ -99,12 +107,17 @@ class ThompsonSampling(Bandit):  # based on the paper "Thompson Sampling for Com
             else:
                 self.b[arm] += 1
 
-    def reset(self):
+    def reset(self) -> object:
         self.a = np.ones(self.d)
         self.b = np.ones(self.d)
 
 
-class CombUCB(Bandit):  # based on the paper ""
+class CombUCB(Bandit):
+    """
+    Implementation of CombUCB as a baseline algorithm
+    https://arxiv.org/pdf/1502.03475.pdf
+    """
+
     def __init__(self, d, action_set, m):
         super().__init__(action_set, d, m)
         self.t = 0
@@ -140,13 +153,16 @@ class CombUCB(Bandit):  # based on the paper ""
             self.emp_sum[arm] += feedback[i]
             self.te[arm] += 1
 
-    def reset(self):
+    def reset(self) -> object:
         self.t = 0
         self.te = np.zeros(self.d)  # the T(e) in the paper: number of observations of arm e
         self.emp_sum = np.zeros(self.d)
 
 
 class OSMD(Bandit):
+    """
+    Container for shared utility of algorithms based on Online Stochastic Mirror Descent
+    """
     L = None
     x = None
     t = 0.0
@@ -163,7 +179,7 @@ class OSMD(Bandit):
         self.solve_optimization()
         return self.sample_action(self.x)
 
-    def reset(self):
+    def reset(self) -> object:
         self.L = np.array([0.0] * self.d)
         self.x = [self.m / self.d if not self.unconstrained else 0.5 for _ in range(self.d)]
         self.t = 0.0
@@ -230,6 +246,10 @@ class OSMD(Bandit):
 
 
 class BobOSMD(OSMD):
+    """
+    Implementation of our HYBRID algorithm; the algorithm to be evaluated.
+    https://arxiv.org/pdf/1901.08779.pdf
+    """
 
     def __init__(self, d, action_set, m):
         super().__init__(d, action_set, m)
@@ -259,9 +279,12 @@ class BobOSMD(OSMD):
 
 
 class BarrierOSMD(OSMD):
+    """
+    Implementaton of BARRIER as a baseline algorithm.
+    https://arxiv.org/pdf/1801.03265.pdf
+    """
 
     def solve_unconstrained(self, loss, warmstart):
-        # TODO adjust learning rate?
         return 1.0 if loss <= 0 else min(1.0, 1.0 / loss)
 
     def hessian_inverse(self):
@@ -272,11 +295,12 @@ class BarrierOSMD(OSMD):
 
 
 class ShannonOSMD(OSMD):
+    """
+    Implementation of CombEXP3 as a baseline algorithm.
+    https://arxiv.org/pdf/1502.03475.pdf
+    """
 
     def solve_unconstrained(self, loss, warmstart):
-        """
-        TODO adjust learning rate?
-        """
         return min(1.0, np.exp(-loss))
 
     def hessian_inverse(self):

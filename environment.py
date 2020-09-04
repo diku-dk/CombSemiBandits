@@ -1,17 +1,18 @@
 import random
 import numpy as np
 
+
 class Environment:
 
-    def __init__(self, gap, d, m, T):
+    def __init__(self, gap, d, m, n):
         self.gap = gap
         self.d = d
         self.m = m
-        self.T = T
+        self.n = n
         self.baseline = None
         self.mean_losses = None
 
-    def reset(self):
+    def reset(self) -> object:
         raise NotImplementedError
 
     def play(self, action, t):
@@ -21,9 +22,13 @@ class Environment:
 
 
 class Stochastic(Environment):
+    """
+    Bandit environment that sets mean rewards around 0.5 and picks losses from Bernoulli distributions.
+    The gap vector at initialization determines the mean rewards.
+    """
 
-    def __init__(self, action_set, gap, d, m, T):
-        super().__init__(gap, d, m, T)
+    def __init__(self, action_set, gap, d, m, n):
+        super().__init__(gap, d, m, n)
         if action_set == "full":
             assert abs(gap) <= 1
             self.mean_losses = np.array([0.5 * (1.0 + gap) if i < d / 2 else 0.5 * (1.0 - gap) for i in range(d)])
@@ -35,14 +40,20 @@ class Stochastic(Environment):
             raise Exception("Invalid action set %s for stochastic environment, abort." % action_set)
         self.baseline = (self.mean_losses[best_action] - 0.5).sum()
 
-    def reset(self):
+    def reset(self) -> object:
         pass
 
 
 class Adversarial(Environment):
+    """
+    Bandit environment that picks losses from Bernoulli distributions.
+    The gap vector at initialization determines the mean rewards.
+    The mean of the optimal arm iterates between being close to 1 and close to 0 to create a challenging environment
+    for stochastic bandit algorithms.
+    """
 
-    def __init__(self, action_set, gap, d, m, T):
-        super().__init__(gap, d, m, T)
+    def __init__(self, action_set, gap, d, m, n):
+        super().__init__(gap, d, m, n)
         self.action_set = action_set
         if action_set == "full":
             assert abs(gap) <= 1
@@ -61,7 +72,7 @@ class Adversarial(Environment):
         if self.action_set == "full":
 
             # let the mean returns go to the extreme point over time, tune parameter
-            gap = 1.0 / (np.power(self.T, (0.5 - 0.5 * np.power(t / self.T, 1.5))))
+            gap = 1.0 / (np.power(self.n, (0.5 - 0.5 * np.power(t / self.n, 1.5))))
             mean_losses = self.mean_losses + gap
             feedback = [-1.0 if random.random() > mean_losses[i] else 1.0 for i in action]
             return feedback, len(action) * gap
