@@ -259,7 +259,7 @@ class OSMD(Bandit):
         raise NotImplementedError
 
 
-class BobOSMD(OSMD):
+class HYBRID(OSMD):
     """
     Implementation of our HYBRID algorithm; the algorithm to be evaluated.
     https://arxiv.org/pdf/1901.08779.pdf
@@ -292,9 +292,9 @@ class BobOSMD(OSMD):
         return (1.0 / (0.25 / np.power(self.x, 1.5) + self.gamma / (1.0 - self.x))).sum() * self.learning_rate
 
 
-class BarrierOSMD(OSMD):
+class BROAD(OSMD):
     """
-    Implementaton of BARRIER as a baseline algorithm.
+    Implementaton of BROAD as a baseline algorithm.
     https://arxiv.org/pdf/1801.03265.pdf
     """
 
@@ -308,7 +308,7 @@ class BarrierOSMD(OSMD):
         return 4 * np.sqrt(np.log(1.0 + time) / time)
 
 
-class ShannonOSMD(OSMD):
+class CombEXP3(OSMD):
     """
     Implementation of CombEXP3 as a baseline algorithm.
     https://arxiv.org/pdf/1502.03475.pdf

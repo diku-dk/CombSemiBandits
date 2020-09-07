@@ -7,11 +7,11 @@ import os
 from time import time
 import numpy as np
 from environment import Adversarial, Stochastic
-from bandit import BarrierOSMD, ShannonOSMD, CombUCB, ThompsonSampling, BobOSMD
+from bandit import BROAD, CombEXP3, CombUCB, ThompsonSampling, HYBRID
 
 parser = argparse.ArgumentParser(description='Run semi-bandit simulations.')
 parser.add_argument('-a', dest='alg', required=True,
-                    choices=['BobOSMD', 'ShannonOSMD', 'BarrierOSMD', 'ThompsonSampling', 'CombUCB'],
+                    choices=['HYBRID', 'CombEXP3', 'BROAD', 'ThompsonSampling', 'CombUCB'],
                     help='Bandit algorithm.')
 parser.add_argument('-g', type=float, dest='gap', default='0.25',
                     help='Gap between optimal and suboptimal dimensions.')
@@ -31,7 +31,7 @@ parser.add_argument('-o', type=int,
                     help='File ending if runs are broken into parts')
 
 
-def setup_game(dim=7, m_size=3, gap=0.2, mode="stochastic", action_set="m-set", algorithm="BarrierOSMD", n_steps=100):
+def setup_game(dim=7, m_size=3, gap=0.2, mode="stochastic", action_set="m-set", algorithm="BROAD", n_steps=100):
     """
 
     :param dim: int, dimension of the semi-bandit problem
@@ -43,12 +43,12 @@ def setup_game(dim=7, m_size=3, gap=0.2, mode="stochastic", action_set="m-set", 
     :param n_steps: int, time horizon
     :return: bandit, environment objects already initiated the given settings
     """
-    if algorithm == "BobOSMD":
-        bandit = BobOSMD(dim, action_set, m_size)
-    elif algorithm == "ShannonOSMD":
-        bandit = ShannonOSMD(dim, action_set, m_size)
-    elif algorithm == "BarrierOSMD":
-        bandit = BarrierOSMD(dim, action_set, m_size)
+    if algorithm == "HYBRID":
+        bandit = HYBRID(dim, action_set, m_size)
+    elif algorithm == "CombEXP3":
+        bandit = CombEXP3(dim, action_set, m_size)
+    elif algorithm == "BROAD":
+        bandit = BROAD(dim, action_set, m_size)
     elif algorithm == "ThompsonSampling":
         bandit = ThompsonSampling(dim, action_set, m_size)
     elif algorithm == "CombUCB":
